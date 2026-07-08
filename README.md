@@ -86,7 +86,7 @@ docker compose logs -f ots-server
 
 Wait for: `Starting OTS processes via supervisord...`
 
-Then check the Web UI at **http://YOUR_SERVER_IP:8081**
+Then check the Web UI at **http://YOUR_SERVER_IP:8080**
 
 Default admin login:
 - **Username:** `administrator`
@@ -191,20 +191,20 @@ For clients **outside your local network**, open these ports in your firewall/ro
 | Port | Protocol | Service | Required For |
 |------|----------|---------|-------------|
 | `8089` | TCP | SSL CoT Streaming | **ATAK/WinTAK client connection** |
-| `8081` | TCP | OTS Web UI + Marti API | **Web interface, data packages** |
+| `8080` | TCP | OTS Web UI (nginx) | **Web interface, data packages** |
 | `8446` | TCP | Certificate Enrollment | **Web-based cert enrollment** |
 
 **Example — UFW:**
 ```bash
 sudo ufw allow 8089/tcp comment 'ATAK SSL CoT'
-sudo ufw allow 8081/tcp comment 'OTS Web UI'
+sudo ufw allow 8080/tcp comment 'OTS Web UI'
 sudo ufw allow 8446/tcp comment 'OTS Cert Enrollment'
 ```
 
 **Example — iptables:**
 ```bash
 iptables -A INPUT -p tcp --dport 8089 -j ACCEPT
-iptables -A INPUT -p tcp --dport 8081 -j ACCEPT
+iptables -A INPUT -p tcp --dport 8080 -j ACCEPT
 iptables -A INPUT -p tcp --dport 8446 -j ACCEPT
 ```
 

@@ -48,7 +48,9 @@ services:
     ports:
       # REQUIRED - SSL CoT streaming (main ATAK/WinTAK client connection)
       - "${OTS_SSL_STREAMING_PORT:-8089}:8089"
-      # REQUIRED - OTS Web UI + Marti API
+      # REQUIRED - OTS Web UI (nginx serving OpenTAKServer-UI + proxying API)
+      - "8080:8080"
+      # OTS API (loopback backend; exposed for direct API/debug access)
       - "8081:8081"
       # REQUIRED - Certificate enrollment
       - "${OTS_CERTIFICATE_ENROLLMENT_PORT:-8446}:8446"
