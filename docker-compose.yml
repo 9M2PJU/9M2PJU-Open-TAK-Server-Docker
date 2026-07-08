@@ -1,0 +1,87 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: ots-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ots}
+      POSTGRES_USER: ${POSTGRES_USER:-ots}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?err}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - ots-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ots} -d ${POSTGRES_DB:-ots}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: ots-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-ots}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:?err}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - ots-net
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_running"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  opentakserver:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ots-server
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    ports:
+      # REQUIRED - SSL CoT streaming (main ATAK/WinTAK client connection)
+      - "${OTS_SSL_STREAMING_PORT:-8089}:8089"
+      # REQUIRED - OTS Web UI + Marti API
+      - "8081:8081"
+      # REQUIRED - Certificate enrollment
+      - "${OTS_CERTIFICATE_ENROLLMENT_PORT:-8446}:8446"
+      # OPTIONAL - HTTPS Web UI (only if you're running nginx inside the container)
+      # - "${OTS_MARTI_HTTPS_PORT:-8443}:8443"
+      # OPTIONAL - TCP CoT streaming (unencrypted, disable in production)
+      # - "${OTS_TCP_STREAMING_PORT:-8088}:8088"
+    environment:
+      SQLALCHEMY_DATABASE_URI: postgresql+psycopg://${POSTGRES_USER:-ots}:${POSTGRES_PASSWORD:?err}@postgres/${POSTGRES_DB:-ots}
+      OTS_RABBITMQ_SERVER_ADDRESS: rabbitmq
+      OTS_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:-ots}
+      OTS_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:?err}
+      OTS_LISTENER_ADDRESS: 0.0.0.0
+      OTS_LISTENER_PORT: 8081
+      OTS_DATA_FOLDER: /data/ots
+      OTS_CA_PASSWORD: ${OTS_CA_PASSWORD:-atakatak}
+      OTS_CA_ORGANIZATION: ${OTS_CA_ORGANIZATION:-MyOrg}
+      OTS_CA_CITY: ${OTS_CA_CITY:-MyCity}
+      OTS_CA_STATE: ${OTS_CA_STATE:-MyState}
+      OTS_CA_COUNTRY: ${OTS_CA_COUNTRY:-US}
+      OTS_SECRET_KEY: ${OTS_SECRET_KEY:-}
+      OTS_SECURITY_PASSWORD_SALT: ${OTS_SECURITY_PASSWORD_SALT:-}
+      OTS_MEDIAMTX_ENABLE: "False"
+    volumes:
+      - ots_data:/data
+    networks:
+      - ots-net
+
+volumes:
+  pgdata:
+  rabbitmq_data:
+  ots_data:
+
+networks:
+  ots-net:
+    driver: bridge
