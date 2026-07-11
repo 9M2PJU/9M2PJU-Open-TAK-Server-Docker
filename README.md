@@ -6,6 +6,8 @@
 
 Production-ready Docker deployment of **[OpenTAKServer (OTS)](https://github.com/brian7704/OpenTAKServer)** — an open-source TAK (Team Awareness Kit) server compatible with ATAK, WinTAK, and iTAK clients.
 
+> Dockerized and maintained by **[9M2PJU](https://hamradio.my)**.
+
 ## Architecture
 
 ```mermaid
