@@ -1,6 +1,6 @@
 # 9M2PJU OpenTAKServer Docker
 
-[![OpenTAKServer](https://img.shields.io/badge/OpenTAKServer-1.7.11-blue)](https://docs.opentakserver.io)
+[![OpenTAKServer](https://img.shields.io/badge/OpenTAKServer-1.7.12-blue)](https://docs.opentakserver.io)
 [![License](https://img.shields.io/badge/License-GPL%20v3-green)](https://www.gnu.org/licenses/gpl-3.0)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)](https://docs.docker.com/compose/)
 
@@ -42,6 +42,7 @@ This repo packages OTS into a clean, reproducible Docker Compose stack with Post
 
 ## Use cases
 
+- **Android ATAK in the field** — the primary client. ATAK on Android phones/tablets connects over SSL CoT to share position, chat, overlays, and imagery with the rest of the team. This server is the hub those handhelds report into.
 - **Search & Rescue (SAR)** — track field teams in real time on a shared map, push overlay data to handhelds.
 - **Emergency management / EOC** — coordinate multi-agency response with live positioning and chat.
 - **Amateur radio / ARES / RACES** — field deployments for public service events and disaster comms.
@@ -53,20 +54,35 @@ This repo packages OTS into a clean, reproducible Docker Compose stack with Post
 
 ## Comparison: OpenTAKServer vs FreeTAKServer
 
+Sourced from the [official OpenTAKServer feature comparison](https://docs.opentakserver.io/feature_comparison.html) (OTS 1.7.x docs) and the [FreeTAKServer repo](https://github.com/FreeTAKTeam/FreeTakServer). FreeTAKServer 2.x is in active development and aims to close some of these gaps (federation, LDAP, protobuf CoT); the table below reflects the current stable FTS release.
+
 | Feature | OpenTAKServer | FreeTAKServer |
 |---------|:------------:|:-------------:|
-| Active Development | ✅ (2026) | ⚠️ Slower |
-| Auto CA Generation | ✅ | ❌ |
+| TCP / SSL CoT | ✅ | ✅ |
+| Actively Developed | ✅ | ❌ (1.x stable; 2.x in progress) |
+| Automatic CA Generation | ✅ | ❌ |
 | Certificate Enrollment | ✅ | ❌ |
-| Groups/Channels | ✅ | ❌ |
-| LDAP/AD | ✅ | ❌ |
-| Meshtastic | ✅ | ❌ |
-| ADSB/AIS Feeds | ✅ | ❌ |
+| EUD Authentication | ✅ | ❌ |
+| Groups / Channels | ✅ | ❌ |
 | Device Profiles | ✅ | ❌ |
-| Plugin System | ✅ | ❌ |
-| Federation | Coming Soon | ✅ |
-| ExCheck | Coming Soon | ✅ |
-| Architecture | RabbitMQ + PostGIS | DigitalPy + ZeroMQ |
+| Plugin / Update Server | ✅ | ❌ |
+| Data Packages / DataSync | ✅ | ✅ |
+| Mission API | ✅ | ✅ |
+| Federation | ⏳ Coming in 1.7.x | ✅ |
+| ExCheck | ⏳ Coming Soon | ✅ |
+| Video Streaming | ✅ | ✅ |
+| Video Recording / Playback | ✅ | ❌ |
+| Mumble Server Auth | ✅ | ❌ |
+| ADS-B (Airplanes.live) | ✅ | ❌ |
+| AIS (AISHub.net) | ✅ | ❌ |
+| Meshtastic Bridge | ✅ | ❌ |
+| LDAP / Active Directory | ✅ | ❌ (planned in 2.x) |
+| 2FA (TOTP / Email) | ✅ | ❌ |
+| Web UI with Live Map | ✅ | ✅ |
+| Database | SQLAlchemy / PostGIS | SQLAlchemy / SQLite |
+| Runs on Raspberry Pi | ✅ | ✅ |
+| Language | Python | Python |
+| License | GPL v3 | Eclipse Public License |
 
 ## License
 
