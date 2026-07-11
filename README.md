@@ -40,6 +40,7 @@ This repo packages OTS into a clean, reproducible Docker Compose stack with Post
 - **Web UI** — manage users, certs, data packages, and view the live map from a browser.
 - **Persistent volumes** — database, certs, and config survive container rebuilds.
 - **nginx-fronted Web UI** — clean HTTP access on `:8080` instead of exposing the raw Flask app.
+- **Multi-arch** — runs natively on **amd64** (x86_64 servers, cloud VPS) and **arm64** (Raspberry Pi 4/5, AWS Graviton, Ampere, Apple Silicon). No arch-specific binaries, no emulation.
 - **GPL v3** — fully open source, no vendor lock-in, no phone-home.
 
 ## Use cases
