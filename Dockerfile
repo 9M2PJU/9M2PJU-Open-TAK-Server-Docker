@@ -10,6 +10,8 @@ ARG OTS_VERSION=1.7.13
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
+    libproj-dev \
+    proj-bin \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a venv and install OTS + all deps into it.
@@ -27,6 +29,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
+    libproj25 \
     openssl \
     nginx \
     ffmpeg \
