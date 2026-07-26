@@ -1,27 +1,29 @@
-# ---- Builder stage: install build deps + Python wheels ---------------------
-FROM python:3.13-slim AS builder
+# ---- Builder stage: install OTS into a venv with all build deps ------------
+# Use the full (non-slim) Python image as the builder so we get git, g++,
+# pkg-config, and common dev libraries pre-installed. arm/v7 has no prebuilt
+# manylinux wheels for cffi, greenlet, gevent, matplotlib, etc., so pip must
+# compile them from source. The full image avoids a long apt-get list of
+# build deps. The runtime stage stays slim.
+FROM python:3.13 AS builder
 
 ARG OTS_VERSION=1.7.13
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    g++ \
-    libc6-dev \
-    libffi-dev \
     libpq-dev \
-    python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Build wheels into /wheels so the final stage can install without a compiler.
+# Create a venv and install OTS + all deps into it.
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --no-cache-dir --upgrade pip wheel \
-    && pip wheel --no-cache-dir --wheel-dir=/wheels \
-       "opentakserver==${OTS_VERSION}"
+    && pip install --no-cache-dir "opentakserver==${OTS_VERSION}"
 
 # ---- Final stage: runtime image without compiler toolchain ------------------
 FROM python:3.13-slim
 
 ARG OTS_UI_VERSION=v1.7.5
 ENV OTS_UI_VERSION=${OTS_UI_VERSION}
+ENV PATH="/opt/venv/bin:$PATH"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
@@ -33,15 +35,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# Install OTS and all its deps from the wheels built above.
-# --no-index --find-links ensures pip uses ONLY local wheels and never
-# falls back to PyPI (which would require a compiler for sdist-only deps
-# like unishox2-py3).
-ARG OTS_VERSION=1.7.13
-COPY --from=builder /wheels /wheels
-RUN pip install --no-cache-dir --no-index --find-links=/wheels \
-       "opentakserver==${OTS_VERSION}" \
-    && rm -rf /wheels
+# Copy the pre-built venv from the builder. All compiled extensions (cffi,
+# greenlet, gevent, matplotlib, unishox2-py3, etc.) are already built for
+# the target arch. No compiler needed in the runtime stage.
+COPY --from=builder /opt/venv /opt/venv
 
 # OpenTAKServer's Web UI is a separate Vue.js app (OpenTAKServer-UI).
 # The opentakserver package is API-only; nginx must serve the UI and proxy
