@@ -5,8 +5,11 @@ ARG OTS_VERSION=1.7.13
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
+    g++ \
     libc6-dev \
+    libffi-dev \
     libpq-dev \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Build wheels into /wheels so the final stage can install without a compiler.
