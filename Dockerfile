@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     libproj-dev \
     proj-bin \
+    cargo \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a venv and install OTS + all deps into it.
