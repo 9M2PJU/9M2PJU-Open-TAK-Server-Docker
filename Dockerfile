@@ -20,8 +20,12 @@ ENV PATH="/opt/venv/bin:$PATH"
 # arm/v7 has no prebuilt wheels for several deps (contourpy, pyproj, etc.),
 # so pip builds from source under QEMU emulation. GCC 14's -Werror=array-bounds
 # and -Werror=free-nonheap-object trip on pybind11 headers used by contourpy,
-# aborting the build. Disable those two warnings-as-errors only.
-ENV CFLAGS="-Wno-error=array-bounds -Wno-error=free-nonheap-object"
+# aborting the build. CFLAGS covers C; CXXFLAGS covers C++ (where the
+# errors occur). -Wno-error disables all warnings-as-errors without
+# suppressing the warnings themselves. Only affects source builds
+# (arm/v7); wheel-based arches ignore it.
+ENV CFLAGS="-Wno-error"
+ENV CXXFLAGS="-Wno-error"
 RUN pip install --no-cache-dir --upgrade pip wheel \
     && pip install --no-cache-dir "opentakserver==${OTS_VERSION}"
 
