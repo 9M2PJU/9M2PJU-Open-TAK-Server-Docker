@@ -1,7 +1,7 @@
 #!/bin/bash
 # One-shot: generate config, run DB migrations, generate CA, then exit.
 # Called by entrypoint before supervisor starts all processes.
-set -e
+set -euo pipefail
 
 export OTS_DATA_FOLDER="${OTS_DATA_FOLDER:-/data/ots}"
 CONFIG_FILE="${OTS_DATA_FOLDER}/config.yml"
@@ -43,7 +43,7 @@ config_file = os.environ.get("OTS_DATA_FOLDER", "/data/ots") + "/config.yml"
 os.makedirs(os.path.dirname(config_file), exist_ok=True)
 
 # Preserve existing secret keys across restarts. These are used by Flask-Security
-# as a password pepper and by Flask for session signing — regenerating them on
+# as a password pepper and by Flask for session signing - regenerating them on
 # every start invalidates all existing password hashes and sessions. Only
 # generate new random values when no value exists in either the environment or
 # the existing config.yml on disk.
@@ -87,13 +87,14 @@ if [ ! -f "${OTS_DATA_FOLDER}/ca/ca.pem" ]; then
   echo "Generating CA certs..."
   python3 -c "
 import os, sys
-os.environ['OTS_DATA_FOLDER'] = '${OTS_DATA_FOLDER}'
 from opentakserver.defaultconfig import DefaultConfig
 from opentakserver.certificate_authority import CertificateAuthority
 import logging, yaml
 
+data_folder = os.environ.get('OTS_DATA_FOLDER', '/data/ots')
+
 # Load config
-config_file = '${OTS_DATA_FOLDER}/config.yml'
+config_file = os.path.join(data_folder, 'config.yml')
 config = {}
 if os.path.exists(config_file):
     with open(config_file) as f:
@@ -103,7 +104,7 @@ if os.path.exists(config_file):
 class App:
     config = DefaultConfig.__dict__.copy()
     config.update(config)
-    config['OTS_CA_FOLDER'] = os.path.join(config.get('OTS_DATA_FOLDER', '/data/ots'), 'ca')
+    config['OTS_CA_FOLDER'] = os.path.join(config.get('OTS_DATA_FOLDER', data_folder), 'ca')
     def __init__(self):
         for k, v in self.config.items():
             if k.isupper():

@@ -1,0 +1,14 @@
+.git
+.github
+.gitignore
+*.md
+!README.md
+.env
+.env.*
+!.env.example
+opentakserver/
+*.zip
+*.log
+__pycache__/
+*.pyc
+.DS_Store
