@@ -30,9 +30,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# Install OTS from the wheels built above (no gcc/libc6-dev in this stage).
+# Install OTS and all its deps from the wheels built above.
+# --no-index --find-links ensures pip uses ONLY local wheels and never
+# falls back to PyPI (which would require a compiler for sdist-only deps
+# like unishox2-py3).
+ARG OTS_VERSION=1.7.13
 COPY --from=builder /wheels /wheels
-RUN pip install --no-cache-dir /wheels/opentakserver-*.whl \
+RUN pip install --no-cache-dir --no-index --find-links=/wheels \
+       "opentakserver==${OTS_VERSION}" \
     && rm -rf /wheels
 
 # OpenTAKServer's Web UI is a separate Vue.js app (OpenTAKServer-UI).
