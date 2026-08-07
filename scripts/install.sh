@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Author: 9M2PJU - https://hamradio.my
+
 # =============================================================================
 # OpenTAKServer Docker one-line installer
 #

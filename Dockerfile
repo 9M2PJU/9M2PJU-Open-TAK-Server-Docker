@@ -1,3 +1,5 @@
+# Author: 9M2PJU - https://hamradio.my
+
 # ---- Builder stage: install OTS into a venv with all build deps ------------
 # Use the full (non-slim) Python image as the builder so we get git, g++,
 # pkg-config, and common dev libraries pre-installed. The full image avoids a

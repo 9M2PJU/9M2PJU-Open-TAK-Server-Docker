@@ -1,4 +1,6 @@
 #!/bin/bash
+# Author: 9M2PJU - https://hamradio.my
+
 set -euo pipefail
 
 echo "============================================"

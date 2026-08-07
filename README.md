@@ -9,7 +9,7 @@ Docker Compose packaging for [OpenTAKServer](https://github.com/brian7704/OpenTA
 
 This repository builds a practical OTS stack with PostgreSQL, RabbitMQ, nginx, supervisord, the OpenTAKServer API, the OpenTAKServer Web UI, SSL CoT streaming, and certificate enrollment.
 
-Maintained by [9M2PJU](https://hamradio.my).
+Authored and maintained by [9M2PJU](https://hamradio.my).
 
 ## What You Get
 

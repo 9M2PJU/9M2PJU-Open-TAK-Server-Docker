@@ -1,4 +1,6 @@
 #!/bin/bash
+# Author: 9M2PJU - https://hamradio.my
+
 # One-shot: generate config, run DB migrations, generate CA, then exit.
 # Called by entrypoint before supervisor starts all processes.
 set -euo pipefail
