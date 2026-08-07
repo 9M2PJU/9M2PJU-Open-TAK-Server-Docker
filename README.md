@@ -5,192 +5,327 @@
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)](https://docs.docker.com/compose/)
 [![Multi-Arch](https://img.shields.io/badge/arch-amd64%20%7C%20arm64%20%7C%20arm%2Fv7-orange)](#platform-support)
 
-Production-ready Docker deployment of **[OpenTAKServer (OTS)](https://github.com/brian7704/OpenTAKServer)** - an open-source TAK (Team Awareness Kit) server compatible with ATAK, WinTAK, and iTAK clients.
+Docker Compose packaging for [OpenTAKServer](https://github.com/brian7704/OpenTAKServer), a Python TAK server compatible with ATAK, WinTAK, and iTAK.
 
-> Dockerized and maintained by **[9M2PJU](https://hamradio.my)**.
+This repository builds a practical OTS stack with PostgreSQL, RabbitMQ, nginx, supervisord, the OpenTAKServer API, the OpenTAKServer Web UI, SSL CoT streaming, and certificate enrollment.
 
-## Architecture
+Maintained by [9M2PJU](https://hamradio.my).
 
-```mermaid
-flowchart TB
-    subgraph Compose[Docker Compose]
-        PG[(PostgreSQL\n:5432\ndata)]
-        RMQ[(RabbitMQ\n:5672\nmsg q)]
-        OTS[OpenTAKServer]
-        OTS --> API[API :8081]
-        OTS --> EUD[EUD :8089\nSSL CoT]
-        OTS --> CoT[CoT Parser\nRabbitMQ]
-        PG <--> OTS
-        RMQ <--> OTS
-    end
-    ATAK[ATAK/WinTAK\nClients] -. SSL :8089 .-> EUD
-    WEB[Web Browser\nWeb UI] -. HTTP :8081 .-> API
-```
+## What You Get
 
-## Why this exists
+- OpenTAKServer pinned to `1.7.13`.
+- OpenTAKServer-UI pinned to `v1.7.5`.
+- Three services: PostgreSQL 16, RabbitMQ 3.13, and OpenTAKServer.
+- nginx Web UI on port `8080`.
+- SSL CoT streaming on port `8089` for ATAK, WinTAK, and iTAK.
+- Certificate enrollment on port `8446`.
+- Persistent Docker volumes for database, RabbitMQ state, OTS config, CA files, logs, and user data.
+- Multi-arch images for `linux/amd64`, `linux/arm64`, and `linux/arm/v7`.
+- Healthchecks and capped container logs.
 
-TAK is the de-facto standard for real-time situational awareness used by first responders, search & rescue, emergency management, and amateur radio operators worldwide. The official TAK server (TAK Server) is Java-heavy, painful to set up, and locked behind a portal. OpenTAKServer flips that - pure Python, actively developed, and now containerized.
+## Quick Start
 
-This repo packages OTS into a clean, reproducible Docker Compose stack with PostgreSQL + RabbitMQ. No hand-tuned supervisord configs, no manual CA wrangling, no fragile host installs.
-
-## Quick start
-
-### One-line install (recommended)
+### One-Line Installer
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/9M2PJU/9M2PJU-Open-TAK-Server-Docker/main/scripts/install.sh | bash
 ```
 
-The installer:
+The installer creates `./opentakserver`, downloads `docker-compose.yml` and `.env.example`, generates random database and RabbitMQ passwords, pulls the container images, and starts the stack.
 
-- checks for Docker + the Compose v2 plugin,
-- detects your OS/architecture (Linux x86_64 / arm64 / armv7, macOS Intel / Apple Silicon),
-- downloads `docker-compose.yml` and `.env.example` into `./opentakserver/`,
-- generates strong random `POSTGRES_PASSWORD` and `RABBITMQ_DEFAULT_PASS` into `.env` (preserved on re-runs),
-- pulls the multi-arch image from GHCR and starts the stack,
-- prints the Web UI / CoT / enrollment URLs.
-
-Installer options:
+Useful options:
 
 ```bash
-... | bash -s -- --version v1.7.13 --prefix ~/ots --no-start
-... | bash -s -- --upgrade        # re-pull + recreate containers in an existing dir
+curl -fsSL https://raw.githubusercontent.com/9M2PJU/9M2PJU-Open-TAK-Server-Docker/main/scripts/install.sh | bash -s -- --prefix ~/ots
+curl -fsSL https://raw.githubusercontent.com/9M2PJU/9M2PJU-Open-TAK-Server-Docker/main/scripts/install.sh | bash -s -- --version v1.7.13
+curl -fsSL https://raw.githubusercontent.com/9M2PJU/9M2PJU-Open-TAK-Server-Docker/main/scripts/install.sh | bash -s -- --no-start
+curl -fsSL https://raw.githubusercontent.com/9M2PJU/9M2PJU-Open-TAK-Server-Docker/main/scripts/install.sh | bash -s -- --upgrade
 ```
 
-### Manual install
+### Manual Install
 
 ```bash
 git clone https://github.com/9M2PJU/9M2PJU-Open-TAK-Server-Docker.git
 cd 9M2PJU-Open-TAK-Server-Docker
 cp .env.example .env
-# edit .env: set POSTGRES_PASSWORD and RABBITMQ_DEFAULT_PASS (required)
+```
+
+Edit `.env` and set strong values for:
+
+```dotenv
+POSTGRES_PASSWORD=change-me
+RABBITMQ_DEFAULT_PASS=change-me
+```
+
+Start the stack:
+
+```bash
 docker compose up -d
 ```
 
-Or pull the pre-built image directly:
+Check status:
 
+```bash
+docker compose ps
+docker compose logs -f opentakserver
 ```
+
+## First Run
+
+Give the stack about 60 seconds on first boot. OTS needs time to create its config, run migrations, generate its CA, and start the supervised services.
+
+Open the Web UI:
+
+```text
+http://localhost:8080
+```
+
+For ATAK, WinTAK, or iTAK clients, use:
+
+```text
+SSL CoT streaming:  <server-ip>:8089
+Certificate enroll: https://<server-ip>:8446
+```
+
+Use your server IP or DNS name instead of `localhost` when connecting from another device.
+
+## Ports
+
+| Host Port | Container Port | Purpose | Required |
+|---:|---:|---|:---:|
+| `8080` | `8080` | Web UI through nginx | Yes |
+| `8081` | `8081` | Direct OTS Flask API access for debugging | No |
+| `8089` | `8089` | SSL CoT streaming for TAK clients | Yes |
+| `8446` | `8446` | Certificate enrollment | Yes |
+| `8443` | `8443` | Optional HTTPS Web UI | No |
+| `8088` | `8088` | Optional unencrypted TCP CoT streaming | No |
+
+Only expose the ports you need. Avoid enabling unencrypted TCP CoT on `8088` for production use.
+
+## Configuration
+
+Configuration is controlled through `.env` and persisted runtime state under the `ots_data` Docker volume.
+
+Required variables:
+
+| Variable | Purpose |
+|---|---|
+| `POSTGRES_PASSWORD` | PostgreSQL password. Compose refuses to start without it. |
+| `RABBITMQ_DEFAULT_PASS` | RabbitMQ password. Compose refuses to start without it. |
+
+Common optional variables:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `POSTGRES_DB` | `ots` | PostgreSQL database name |
+| `POSTGRES_USER` | `ots` | PostgreSQL username |
+| `RABBITMQ_DEFAULT_USER` | `ots` | RabbitMQ username |
+| `OTS_CA_PASSWORD` | `atakatak` | Password used for the generated OTS CA |
+| `OTS_CA_ORGANIZATION` | `MyOrg` | CA organization field |
+| `OTS_CA_CITY` | `MyCity` | CA city field |
+| `OTS_CA_STATE` | `MyState` | CA state field |
+| `OTS_CA_COUNTRY` | `US` | CA country field |
+| `OTS_SSL_STREAMING_PORT` | `8089` | Host port for SSL CoT streaming |
+| `OTS_CERTIFICATE_ENROLLMENT_PORT` | `8446` | Host port for certificate enrollment |
+
+Secret handling:
+
+- `OTS_SECRET_KEY` and `OTS_SECURITY_PASSWORD_SALT` may be left blank.
+- If blank, the container generates random values once and persists them to `/data/ots/config.yml`.
+- Do not rotate these values casually. Changing them invalidates existing sessions and password hashes.
+- Back up the `ots_data` volume before changing secrets or CA settings.
+
+## Architecture
+
+```mermaid
+flowchart TB
+    ATAK[ATAK / WinTAK / iTAK] -->|SSL CoT :8089| OTS
+    Browser[Browser] -->|HTTP :8080| Nginx
+    Browser -->|Enrollment :8446| Nginx
+
+    subgraph Compose[Docker Compose]
+        Nginx[nginx + Web UI]
+        OTS[OpenTAKServer services]
+        PG[(PostgreSQL 16)]
+        RMQ[(RabbitMQ 3.13)]
+        Data[(ots_data volume)]
+        Nginx -->|proxy :8081| OTS
+        OTS --> PG
+        OTS --> RMQ
+        OTS --> Data
+    end
+```
+
+The OpenTAKServer container runs multiple processes under supervisord:
+
+- nginx for the Web UI and reverse proxy.
+- the OpenTAKServer Flask API.
+- the EUD SSL handler for client streaming.
+- the CoT parser.
+
+## Platform Support
+
+| Platform | Status | Image |
+|---|---|---|
+| Linux x86_64 / amd64 | Supported | `linux/amd64` |
+| Linux arm64 / aarch64 | Supported | `linux/arm64` |
+| Linux arm/v7 | Supported | `linux/arm/v7` |
+| macOS Intel | Supported through Docker Desktop | Linux VM |
+| macOS Apple Silicon | Supported through Docker Desktop | Linux VM, arm64 image |
+| FreeBSD | Not native through this Docker stack | Use a Linux VM or a native OTS install |
+
+## Images
+
+The image is published to GitHub Container Registry:
+
+```text
 ghcr.io/9m2pju/9m2pju-opentakserver:latest
 ```
 
-Tagged releases also produce `:1.7.13`, `:1.7`, `:1` style tags.
+Version tags are also published for releases, including tags in this style:
 
-## Platform support
+```text
+ghcr.io/9m2pju/9m2pju-opentakserver:1.7.13
+ghcr.io/9m2pju/9m2pju-opentakserver:1.7
+ghcr.io/9m2pju/9m2pju-opentakserver:1
+```
 
-| Platform | Status | How |
-|---|---|---|
-| Linux x86_64 (servers, VPS) | ✅ Native | `linux/amd64` image |
-| Linux arm64 (Pi 4/5, Graviton, Ampere, Apple Silicon) | ✅ Native | `linux/arm64` image |
-| Linux arm/v7 (Pi 3, Pi Zero 2 W, older 32-bit boards) | ✅ Native | `linux/arm/v7` image |
-| macOS Intel | ✅ Via Docker Desktop | Linux container under the VM |
-| macOS Apple Silicon | ✅ Via Docker Desktop | Native arm64 container |
-| FreeBSD | ⚠️ Not via this Docker stack | Docker is not native on FreeBSD; use a Linux VM/jail or a host install of OpenTAKServer |
+## Operations
 
-The OTS Python package itself is OS-agnostic, so the only platform-specific work is packaging system dependencies. The `scripts/` (entrypoint, supervisord, nginx, start) are portable shell + Python and work anywhere those services run.
+Start:
 
-## What you get
+```bash
+docker compose up -d
+```
 
-- **Three-container stack** - PostgreSQL 16, RabbitMQ, and OpenTAKServer, isolated and scalable.
-- **Automatic CA + client certificates** - OTS generates its own CA and issues per-user certs via the Web UI. No OpenSSL gymnastics.
-- **ATAK / WinTAK / iTAK compatible** - speaks the same SSL CoT streaming protocol as the official TAK Server.
-- **Web UI** - manage users, certs, data packages, and view the live map from a browser.
-- **Persistent volumes** - database, certs, and config survive container rebuilds.
-- **nginx-fronted Web UI** - clean HTTP access on `:8080` instead of exposing the raw Flask app.
-- **Multi-arch** - runs natively on **amd64** (x86_64 servers, cloud VPS), **arm64** (Raspberry Pi 4/5, AWS Graviton, Ampere, Apple Silicon), and **arm/v7** (Raspberry Pi 3, Pi Zero 2 W, other 32-bit boards). No arch-specific binaries, no emulation.
-- **Pre-built images** - multi-arch images published to GHCR via GitHub Actions on every push to `main` and on version tags. Pull it instead of building from source:
-  ```
-  ghcr.io/9m2pju/9m2pju-opentakserver:latest
-  ```
-  Tagged releases also produce `:1.7.13`, `:1.7`, `:1` style tags.
-- **GPL v3** - fully open source, no vendor lock-in, no phone-home.
+Stop:
 
-## Use cases
+```bash
+docker compose down
+```
 
-- **Android ATAK in the field** - the primary client. ATAK on Android phones/tablets connects over SSL CoT to share position, chat, overlays, and imagery with the rest of the team. This server is the hub those handhelds report into.
-- **Search & Rescue (SAR)** - track field teams in real time on a shared map, push overlay data to handhelds.
-- **Emergency management / EOC** - coordinate multi-agency response with live positioning and chat.
-- **Amateur radio / ARES / RACES** - field deployments for public service events and disaster comms.
-- **Airsoft / MilSim** - blue-force tracker for organized scenario play.
-- **Drone operations** - feed UAV positions into a common operating picture.
-- **Maritime / AIS & ADS-B** - OTS ingests AIS and ADS-B feeds for vessel and aircraft tracking.
-- **Meshtastic integration** - bridge LoRa mesh radios into the TAK picture.
-- **Training & education** - stand up a classroom TAK server in minutes without licensing headaches.
+View logs:
 
-## Comparison: OpenTAKServer vs FreeTAKServer
+```bash
+docker compose logs -f
+docker compose logs -f opentakserver
+```
 
-Sourced from the [official OpenTAKServer feature comparison](https://docs.opentakserver.io/feature_comparison.html) (OTS 1.7.x docs) and the [FreeTAKServer repo](https://github.com/FreeTAKTeam/FreeTakServer). FreeTAKServer 2.x is in active development and aims to close some of these gaps (federation, LDAP, protobuf CoT); the table below reflects the current stable FTS release.
+Restart only OTS:
 
-| Feature | OpenTAKServer | FreeTAKServer |
-|---------|:------------:|:-------------:|
-| TCP / SSL CoT | ✅ | ✅ |
-| Actively Developed | ✅ | ❌ (1.x stable; 2.x in progress) |
-| Automatic CA Generation | ✅ | ❌ |
-| Certificate Enrollment | ✅ | ❌ |
-| EUD Authentication | ✅ | ❌ |
-| Groups / Channels | ✅ | ❌ |
-| Device Profiles | ✅ | ❌ |
-| Plugin / Update Server | ✅ | ❌ |
-| Data Packages / DataSync | ✅ | ✅ |
-| Mission API | ✅ | ✅ |
-| Federation | ⏳ Coming in 1.7.x | ✅ |
-| ExCheck | ⏳ Coming Soon | ✅ |
-| Video Streaming | ✅ | ✅ |
-| Video Recording / Playback | ✅ | ❌ |
-| Mumble Server Auth | ✅ | ❌ |
-| ADS-B (Airplanes.live) | ✅ | ❌ |
-| AIS (AISHub.net) | ✅ | ❌ |
-| Meshtastic Bridge | ✅ | ❌ |
-| LDAP / Active Directory | ✅ | ❌ (planned in 2.x) |
-| 2FA (TOTP / Email) | ✅ | ❌ |
-| Web UI with Live Map | ✅ | ✅ |
-| Database | SQLAlchemy / PostGIS | SQLAlchemy / SQLite |
-| Runs on Raspberry Pi | ✅ | ✅ |
-| Language | Python | Python |
-| License | GPL v3 | Eclipse Public License |
+```bash
+docker compose restart opentakserver
+```
 
-## Changelog
+Pull newer images and recreate containers:
 
-### Latest round of improvements
+```bash
+docker compose pull
+docker compose up -d --force-recreate
+```
 
-**One-line installer**
-- New `scripts/install.sh`: a `curl | bash` bootstrap that detects OS/arch, downloads compose + env template, generates strong random passwords, pulls the image, and starts the stack. Supports `--version`, `--prefix`, `--no-start`, `--upgrade`.
+Back up persistent data:
 
-**Platform coverage**
-- CI now builds **`linux/arm/v7`** in addition to `amd64` and `arm64`, so Raspberry Pi 3 / Pi Zero 2 W / other 32-bit ARM boards run natively instead of under emulation.
-- README documents the full platform matrix (Linux x86_64/arm64/armv7, macOS Intel/Apple Silicon via Docker Desktop, FreeBSD limitations).
+```bash
+docker run --rm -v 9m2pju-open-tak-server-docker_ots_data:/data -v "$PWD":/backup alpine tar czf /backup/ots-data-backup.tgz -C /data .
+```
 
-**Dockerfile hardening**
-- Switched to a **multi-stage build**: `gcc`, `libc6-dev`, `libpq-dev` live in a builder stage that produces wheels; the final runtime image only carries `libpq5`. Smaller image, no compiler toolchain shipped to production.
-- **Pinned `opentakserver==1.7.13`** via a build arg (`OTS_VERSION`) instead of floating `pip install opentakserver`. Upgrades are now explicit.
-- `OTS_UI_VERSION` exposed as both `ARG` and `ENV` for traceability.
-- Added a `HEALTHCHECK` (curl against nginx on `:8080`) so orchestrators can detect a sick container.
+Your volume prefix may differ if your Compose project name is different. Confirm it with:
 
-**Compose / operations**
-- Added a healthcheck for the `opentakserver` service (previously only postgres and rabbitmq had one).
-- Added `json-file` log driver caps (`max-size: 10m`, `max-file: 3`) to all three services so logs can't fill the disk on long-running deployments.
+```bash
+docker volume ls
+```
 
-**Config & onboarding**
-- New `.env.example` documenting every required and optional variable with inline comments. Required passwords are clearly marked.
-- README warns that rotating `OTS_SECRET_KEY` / `OTS_SECURITY_PASSWORD_SALT` invalidates sessions and password hashes.
+## Build From Source
 
-**Build hygiene**
-- New `.dockerignore` keeps `.git`, `.github`, local `.env`, `*.md` (except README), `__pycache__`, and `*.zip` out of the build context. Faster builds, smaller context, no accidental secret leakage.
+```bash
+docker compose build
+docker compose up -d
+```
 
-**Script robustness**
-- All shell scripts now use `set -euo pipefail` instead of just `set -e`.
-- `scripts/wait-for-ca.sh` rewritten to remove the off-by-one in the timeout warning (it previously warned at iteration 60 *before* the final sleep, and the warning text said "60s" while the actual wait was 120s). Now correctly warns after 120s.
-- `scripts/start.sh` CA-generation block no longer interpolates `${OTS_DATA_FOLDER}` directly into a Python string (which would break on paths containing single quotes); it reads `os.environ` inside Python instead.
+Override pinned versions at build time:
 
-### Roadmap (not yet done)
+```bash
+docker build \
+  --build-arg OTS_VERSION=1.7.13 \
+  --build-arg OTS_UI_VERSION=v1.7.5 \
+  -t opentakserver-local .
+```
 
-- Non-root container user (supervisor + nginx + OTS processes drop privileges).
-- Pin the OpenTAKServer-UI zip by SHA256 checksum.
-- Dependabot/Renovate config for base image, `OTS_VERSION`, `OTS_UI_VERSION`, postgres, and rabbitmq bumps.
-- Native (non-Docker) install docs for macOS (Homebrew) and FreeBSD (pkg/jail).
+## nginx and socket.io Note
 
-## Support the project
+This image intentionally uses nginx with `proxy_set_header Host $http_host;` for proxied OTS requests.
 
-If this Docker packaging saved you time, consider buying 9M2PJU a coffee or sending a tip via Wise. Every contribution helps keep the images rebuilt, the docs updated, and the Pi builds green.
+Do not change this to `$host`. `$host` strips the port from the `Host` header, while browser `Origin` headers keep the port. That mismatch causes socket.io requests to fail with `400 Not an accepted origin`.
+
+Do not install `gevent-websocket` to force WebSocket transport in this container. This setup is designed to use socket.io long polling through nginx, which is the reliable mode for this packaging.
+
+## Troubleshooting
+
+Check whether containers are healthy:
+
+```bash
+docker compose ps
+```
+
+Read OTS logs:
+
+```bash
+docker compose logs -f opentakserver
+```
+
+Validate your Compose file and environment:
+
+```bash
+docker compose config -q
+```
+
+If the Web UI loads but live updates do not work, check that your nginx config still preserves the `Host` header with `$http_host`.
+
+If clients cannot enroll certificates, confirm that port `8446` is reachable from the client network and that the OTS CA has been generated in the `ots_data` volume.
+
+If ATAK, WinTAK, or iTAK cannot connect, confirm that port `8089` is reachable and that the client is using SSL CoT, not unencrypted TCP CoT.
+
+## Development Checks
+
+Before opening a pull request, run:
+
+```bash
+bash -n scripts/*.sh
+cp .env.example .env.testenv
+POSTGRES_PASSWORD=test RABBITMQ_DEFAULT_PASS=test docker compose --env-file .env.testenv config -q
+rm .env.testenv
+git grep -n $'\u2014'
+git ls-files | grep -x AGENTS.md
+```
+
+Expected results:
+
+- Shell syntax check exits cleanly.
+- Compose validation exits cleanly.
+- The em dash grep returns no files.
+- `AGENTS.md` is not tracked.
+
+## Use Cases
+
+- Field TAK server for ATAK, WinTAK, and iTAK users.
+- Search and rescue team tracking.
+- Emergency operations center coordination.
+- Amateur radio, ARES, and RACES deployments.
+- Training environments and classroom labs.
+- Airsoft, MilSim, and event operations.
+- Drone, AIS, ADS-B, and Meshtastic workflows supported by OTS.
+
+## Roadmap
+
+- Run container processes as a non-root user.
+- Pin the OpenTAKServer-UI release zip by SHA256.
+- Add Dependabot or Renovate coverage for base images and pinned upstream versions.
+- Add native non-Docker install notes for macOS and FreeBSD.
+
+## Support
+
+If this packaging saves you time, you can support maintenance here:
 
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-9M2PJU-FFDD00?logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/9m2pju)
 [![Wise](https://img.shields.io/badge/Wise-faizulz13-9FE870?logo=wise&logoColor=white)](https://wise.com/pay/me/faizulz13)
@@ -200,14 +335,6 @@ If this Docker packaging saved you time, consider buying 9M2PJU a coffee or send
 
 ## License
 
-This Docker deployment is provided under the [GNU General Public License v3.0](LICENSE).
+This Docker deployment is licensed under the [GNU General Public License v3.0](LICENSE).
 
-OpenTAKServer itself is © Brian Wallen and contributors, licensed under GPL v3.
-
----
-
-<div align="center">
-  <b>73 - 9M2PJU</b>
-  <br>
-  <i>Open source TAK for everyone</i>
-</div>
+OpenTAKServer is copyright Brian Wallen and contributors, licensed under GPL v3.

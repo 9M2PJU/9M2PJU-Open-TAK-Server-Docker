@@ -45,6 +45,7 @@ services:
         max-file: "3"
 
   opentakserver:
+    image: ghcr.io/9m2pju/9m2pju-opentakserver:latest
     build:
       context: .
       dockerfile: Dockerfile
