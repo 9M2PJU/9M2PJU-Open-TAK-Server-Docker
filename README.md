@@ -11,7 +11,7 @@ This repository builds a practical OTS stack with PostgreSQL, RabbitMQ, nginx, s
 
 ## What Is TAK?
 
-The Team Awareness Kit (TAK) is a geospatial situational-awareness and collaboration ecosystem developed by the U.S. Department of Defense. It originated with the Android Team Awareness Kit (ATAK), which was developed by Air Force Research Laboratory (AFRL) scientists and engineers for military and special operations users. The ecosystem now includes clients such as ATAK, WinTAK, and iTAK, along with TAK servers that share operational data between connected teams.
+The Team Awareness Kit (TAK) is a geospatial situational-awareness and collaboration ecosystem originally developed by the U.S. Department of Defense. It originated with the Android Team Awareness Kit (ATAK), which was developed by Air Force Research Laboratory (AFRL) scientists and engineers for military and special operations users. The ecosystem now includes clients such as ATAK, WinTAK, and iTAK, along with TAK servers that share operational data between connected teams.
 
 Common uses include:
 
@@ -25,7 +25,7 @@ TAK helps teams maintain a shared operational picture by exchanging locations, m
 
 For more background, see [AFRL's Tactical Assault Kit overview](https://afresearchlab.com/tactical-assault-kit-tak/), the [DHS Team Awareness Kit fact sheet](https://www.dhs.gov/publication/team-awareness-kit-fact-sheet), and the [DHS disaster-response example](https://www.dhs.gov/science-and-technology/news/2023/06/01/finding-common-ground-disaster-response).
 
-Authored and maintained by [9M2PJU](https://hamradio.my).
+This GitHub repository is authored and maintained by [9M2PJU](https://hamradio.my). It provides Docker Compose packaging and configuration for OpenTAKServer; it is not the creator of TAK or its client applications.
 
 ## What You Get
 
