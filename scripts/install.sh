@@ -20,14 +20,31 @@ NO_START=0
 UPGRADE=0
 
 print_help() {
-  sed -n '2,16p' "$0" 2>/dev/null || true
+  cat <<'HELP'
+Usage:
+  curl -fsSL https://raw.githubusercontent.com/9M2PJU/9M2PJU-Open-TAK-Server-Docker/main/scripts/install.sh | bash
+
+Options:
+  --version <tag>     Git tag/branch to fetch (default: main)
+  --prefix <dir>      Install directory (default: ./opentakserver)
+  --no-start          Do not run 'docker compose up -d' after install
+  --upgrade           Re-pull images and recreate containers in an existing dir
+  -h, --help          Show this help
+HELP
   exit 0
+}
+
+require_option_value() {
+  if [ "$#" -lt 2 ] || [ -z "$2" ]; then
+    echo "ERROR: $1 requires a value." >&2
+    exit 2
+  fi
 }
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --version) VERSION="$2"; shift 2 ;;
-    --prefix)  PREFIX="$2";  shift 2 ;;
+    --version) require_option_value "$@"; VERSION="$2"; shift 2 ;;
+    --prefix)  require_option_value "$@"; PREFIX="$2";  shift 2 ;;
     --no-start) NO_START=1; shift ;;
     --upgrade)  UPGRADE=1;  shift ;;
     -h|--help) print_help ;;
@@ -65,9 +82,7 @@ echo "Detected: OS=${OS} ARCH=${ARCH}"
 case "${OS}/${ARCH}" in
   Linux/x86_64)   echo "Platform: linux/amd64 (native)" ;;
   Linux/aarch64)  echo "Platform: linux/arm64 (native)" ;;
-  Linux/armv7l)   echo "Platform: linux/arm/v7 (native)" ;;
-  Darwin/x86_64)  echo "Platform: runs via Docker Desktop for macOS (x86_64)" ;;
-  Darwin/arm64)   echo "Platform: runs via Docker Desktop for macOS (Apple Silicon)" ;;
+  FreeBSD/*)      echo "Platform: FreeBSD via a Linux VM (linux/amd64 or linux/arm64)" ;;
   *) echo "WARNING: untested platform ${OS}/${ARCH}; continuing anyway" ;;
 esac
 

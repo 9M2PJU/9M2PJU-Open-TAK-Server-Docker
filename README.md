@@ -3,7 +3,7 @@
 [![OpenTAKServer](https://img.shields.io/badge/OpenTAKServer-1.7.13-blue)](https://docs.opentakserver.io)
 [![License](https://img.shields.io/badge/License-GPL%20v3-green)](https://www.gnu.org/licenses/gpl-3.0)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)](https://docs.docker.com/compose/)
-[![Multi-Arch](https://img.shields.io/badge/arch-amd64%20%7C%20arm64%20%7C%20arm%2Fv7-orange)](#platform-support)
+[![Multi-Arch](https://img.shields.io/badge/arch-amd64%20%7C%20arm64-orange)](#platform-support)
 
 Docker Compose packaging for [OpenTAKServer](https://github.com/brian7704/OpenTAKServer), a Python TAK server compatible with ATAK, WinTAK, and iTAK.
 
@@ -20,7 +20,7 @@ Maintained by [9M2PJU](https://hamradio.my).
 - SSL CoT streaming on port `8089` for ATAK, WinTAK, and iTAK.
 - Certificate enrollment on port `8446`.
 - Persistent Docker volumes for database, RabbitMQ state, OTS config, CA files, logs, and user data.
-- Multi-arch images for `linux/amd64`, `linux/arm64`, and `linux/arm/v7`.
+- Multi-arch images for `linux/amd64` and `linux/arm64`.
 - Healthchecks and capped container logs.
 
 ## Quick Start
@@ -169,10 +169,7 @@ The OpenTAKServer container runs multiple processes under supervisord:
 |---|---|---|
 | Linux x86_64 / amd64 | Supported | `linux/amd64` |
 | Linux arm64 / aarch64 | Supported | `linux/arm64` |
-| Linux arm/v7 | Supported | `linux/arm/v7` |
-| macOS Intel | Supported through Docker Desktop | Linux VM |
-| macOS Apple Silicon | Supported through Docker Desktop | Linux VM, arm64 image |
-| FreeBSD | Not native through this Docker stack | Use a Linux VM or a native OTS install |
+| FreeBSD | Supported through a Linux VM | `linux/amd64` or `linux/arm64` |
 
 ## Images
 
@@ -321,7 +318,7 @@ Expected results:
 - Run container processes as a non-root user.
 - Pin the OpenTAKServer-UI release zip by SHA256.
 - Add Dependabot or Renovate coverage for base images and pinned upstream versions.
-- Add native non-Docker install notes for macOS and FreeBSD.
+- Add native non-Docker install notes for FreeBSD.
 
 ## Support
 
