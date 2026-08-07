@@ -25,7 +25,15 @@ TAK helps teams maintain a shared operational picture by exchanging locations, m
 
 For more background, see [AFRL's Tactical Assault Kit overview](https://afresearchlab.com/tactical-assault-kit-tak/), the [DHS Team Awareness Kit fact sheet](https://www.dhs.gov/publication/team-awareness-kit-fact-sheet), and the [DHS disaster-response example](https://www.dhs.gov/science-and-technology/news/2023/06/01/finding-common-ground-disaster-response).
 
-This GitHub repository is authored and maintained by [9M2PJU](https://hamradio.my). It provides Docker Compose packaging and configuration for OpenTAKServer; it is not the creator of TAK or its client applications.
+## About 9M2PJU
+
+9M2PJU is the amateur radio callsign used by the maintainer of this repository. It identifies the radio operator and personal project behind this Docker packaging. OpenTAKServer and the TAK ecosystem are separate upstream projects; this repository packages and configures them for Docker Compose deployments.
+
+## TAK for Amateur Radio Emergency Communications
+
+TAK has strong potential as a digital situational-awareness layer for amateur radio emergency communications. During an incident, trained operators and response teams could use TAK to share team locations, operating areas, checkpoints, routes, hazards, resource locations, and field reports on a common map. This can complement voice nets and other amateur radio modes by giving coordinators a shared operational picture.
+
+OpenTAKServer can act as a central TAK server when a local network, internet connection, or portable IP link is available. TAK does not replace voice radio or create a radio link by itself. A useful deployment also needs compatible clients, network transport, trained operators, and procedures tested before an emergency. Amateur radio use must follow the licensing requirements and emergency-communications procedures that apply in the operating jurisdiction.
 
 ## What You Get
 
